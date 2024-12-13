@@ -23,7 +23,7 @@ import pickle
 
 def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
           test_graphs_seq, test_labels):
-    save = "result/17"
+    save = "weights"
     model_filename = f"withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
     if os.path.exists(os.path.join(save, model_filename)):
         print("model exists")
@@ -123,7 +123,7 @@ _, label_dict = dgl.load_graphs("dataset/k5_d128_smiles.bin")
 graphs_seq = dgl.load_graphs("dataset/fasttext_k5_d128_rna.bin")
 graphs_seq = graphs_seq[0]
 labels = label_dict['labels'].to(device)
-smiles = pd.read_excel("dataset/smiles_3ker.xlsx")
+smiles = pd.read_excel("dataset/smiles_3mer.xlsx")
 
 # graphs_mol = torch.load('dataset/mol_graphdataset_17.pth')
 file_path = 'dataset/mol_withH_17.pkl'  # **
@@ -141,10 +141,6 @@ total_spcc = []
 total_mae = []
 for train_idx, test_idx in kfold.split(graphs_seq):
     print("Train times: ", train_number + 1)
-    # if (train_number + 1) != 4:
-    #     print("!=4")
-    #     train_number += 1
-    #     continue
     train_graphs_mol = [graphs_mol[i] for i in train_idx]
     train_graphs_seq = [graphs_seq[i] for i in train_idx]
     train_smiles = [torch.tensor(smiles.iloc[i].values) for i in train_idx]
@@ -156,7 +152,7 @@ for train_idx, test_idx in kfold.split(graphs_seq):
 
     train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
           test_graphs_seq, test_labels)
-    model_path = f"result/17/withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
+    model_path = f"weights/withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
     RMSE, PCC, SPCC, MAE = test(test_graphs_seq, test_graphs_mol, test_smiles, test_labels, model_path, device)
     train_number += 1
 
