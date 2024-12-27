@@ -121,7 +121,7 @@ print(device)
 # 假设graphs是一个包含所有图的列表，labels是一个包含所有标签的张量
 graphs_seq = dgl.load_graphs("dataset/fasttext_k5_d128_rna.bin")
 graphs_seq = graphs_seq[0]
-labels = torch.Tensor("dataset/labels.npy").to(device)
+labels = torch.Tensor(np.load("dataset/restored_labels.npy")).to(device)
 smiles = pd.read_excel("dataset/smiles_3mer.xlsx")
 
 # graphs_mol = torch.load('dataset/mol_graphdataset_17.pth')
