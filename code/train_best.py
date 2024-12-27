@@ -119,10 +119,9 @@ def test(test_data_seq, test_data_mol, test_smiles, test_labels, model_path, dev
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 # 假设graphs是一个包含所有图的列表，labels是一个包含所有标签的张量
-_, label_dict = dgl.load_graphs("dataset/k5_d128_smiles.bin")
 graphs_seq = dgl.load_graphs("dataset/fasttext_k5_d128_rna.bin")
 graphs_seq = graphs_seq[0]
-labels = label_dict['labels'].to(device)
+labels = torch.Tensor("dataset/labels.npy").to(device)
 smiles = pd.read_excel("dataset/smiles_3mer.xlsx")
 
 # graphs_mol = torch.load('dataset/mol_graphdataset_17.pth')
