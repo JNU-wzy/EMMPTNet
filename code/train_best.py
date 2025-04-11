@@ -23,20 +23,23 @@ import pickle
 
 def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
           test_graphs_seq, test_labels):
-    save = "weights"
-    model_filename = f"withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
+    save = "result/overfit"
+    model_filename = f"withH_model_selfatt_{train_number + 1}_xavier_fast-5——overfit.pth"
     if os.path.exists(os.path.join(save, model_filename)):
         print("model exists")
         return
     model = GCN_BiLSTM_selfattn().to(device)
     reset_parameters(model)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00002)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.00002, weight_decay=1e-5)
     best_RMSE_loss = 10
+    patience = 50  # 设置耐心值（50轮）
+    counter = 0  # 用于记录训练集损失多少次未改善
+    loss_history = []
 
     train_dataset = CustomDataset(train_graphs_mol, train_graphs_seq, train_smiles, train_labels)
-    train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True, collate_fn=custom_collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, collate_fn=custom_collate_fn)
 
-    for epoch in range(1800):
+    for epoch in range(1000):
         start_time = time.time()
         model.train()
         total_loss = 0
@@ -69,11 +72,22 @@ def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_
         end_time = time.time()
         epoch_duration = end_time - start_time
         print(f"Epoch {epoch}: Train Loss: {total_loss / len(train_loader)}, Duration: {epoch_duration:.2f} seconds")
+        loss_history.append(total_loss / len(train_loader))
 
         if total_loss / len(train_loader) < best_RMSE_loss:
             best_RMSE_loss = total_loss / len(train_loader)
+            counter = 0  
             torch.save({'model_state_dict': model.state_dict()}, os.path.join(save, model_filename))
-            print("saved model")
+            print(f"Saved model at epoch {epoch}")
+        else:
+            counter += 1
+
+
+        if counter >= patience:
+            print(f"Early stopping at epoch {epoch}, no improvement in training loss for {patience} epochs.")
+            break
+
+    print("Training complete.")
 
 
 def test(test_data_seq, test_data_mol, test_smiles, test_labels, model_path, device):
