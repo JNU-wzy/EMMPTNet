@@ -23,20 +23,23 @@ import pickle
 
 def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
           test_graphs_seq, test_labels):
-    save = "result/17"
-    model_filename = f"withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
+    save = "result/overfit"
+    model_filename = f"withH_model_selfatt_{train_number + 1}_xavier_fast-5——overfit.pth"
     if os.path.exists(os.path.join(save, model_filename)):
         print("model exists")
         return
     model = GCN_BiLSTM_selfattn().to(device)
     reset_parameters(model)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.00002)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.00002, weight_decay=1e-5)
     best_RMSE_loss = 10
+    patience = 50  # 设置耐心值（50轮）
+    counter = 0  # 用于记录训练集损失多少次未改善
+    loss_history = []
 
     train_dataset = CustomDataset(train_graphs_mol, train_graphs_seq, train_smiles, train_labels)
-    train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True, collate_fn=custom_collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True, collate_fn=custom_collate_fn)
 
-    for epoch in range(1800):
+    for epoch in range(1000):
         start_time = time.time()
         model.train()
         total_loss = 0
@@ -69,11 +72,23 @@ def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_
         end_time = time.time()
         epoch_duration = end_time - start_time
         print(f"Epoch {epoch}: Train Loss: {total_loss / len(train_loader)}, Duration: {epoch_duration:.2f} seconds")
-
+        loss_history.append(total_loss / len(train_loader))
+        # 提前终止判断：如果训练集的损失在连续50个epoch没有下降
         if total_loss / len(train_loader) < best_RMSE_loss:
             best_RMSE_loss = total_loss / len(train_loader)
+            counter = 0  # 重置耐心计数
             torch.save({'model_state_dict': model.state_dict()}, os.path.join(save, model_filename))
-            print("saved model")
+            print(f"Saved model at epoch {epoch}")
+        else:
+            counter += 1
+
+        # 如果训练损失未改善超过耐心次数，提前结束
+        if counter >= patience:
+            print(f"Early stopping at epoch {epoch}, no improvement in training loss for {patience} epochs.")
+            break
+
+    print("Training complete.")
+
 
 
 def test(test_data_seq, test_data_mol, test_smiles, test_labels, model_path, device):
@@ -91,7 +106,7 @@ def test(test_data_seq, test_data_mol, test_smiles, test_labels, model_path, dev
     model.eval()  # 设置为评估模式
     with torch.no_grad():  # 禁用梯度计算
         test_preds = [
-            model(g_mol.to(device), g_seq.to(device), g_seq.ndata['attr'].to(device), s.to(device))[0].squeeze()
+            model(g_mol.to(device), g_seq.to(device), g_seq.ndata['attr'].to(device).float(), s.to(device))[0].squeeze()
             for (g_seq, g_mol, s) in zip(test_data_seq, test_data_mol, test_smiles)]
         # test_preds, _ = [
         #     model(g_mol.to(device), g_seq.to(device), g_seq.ndata['attr'].to(device),  s.to(device)).squeeze()
@@ -113,16 +128,14 @@ def test(test_data_seq, test_data_mol, test_smiles, test_labels, model_path, dev
     return RMSE, PCC, SPCC, MAE
 
 
-
-
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 # 假设graphs是一个包含所有图的列表，labels是一个包含所有标签的张量
-_, label_dict = dgl.load_graphs("dataset/k5_d128_smiles.bin")
-graphs_seq = dgl.load_graphs("dataset/fasttext_k5_d128_rna.bin")
+# _, label_dict = dgl.load_graphs("dataset/k5_d128_smiles.bin")
+graphs_seq = dgl.load_graphs(r"D:\Project\bioinformatics_project\binding "
+                             r"affinity\code\smiles_kmer_GCNseq_GCNMOL\dataset\fasttext_k5_d128_rna.bin")
 graphs_seq = graphs_seq[0]
-labels = label_dict['labels'].to(device)
+labels = torch.Tensor(np.load("dataset/labels.npy")).to(device)
 smiles = pd.read_excel("dataset/smiles_3ker.xlsx")
 
 # graphs_mol = torch.load('dataset/mol_graphdataset_17.pth')
@@ -156,7 +169,7 @@ for train_idx, test_idx in kfold.split(graphs_seq):
 
     train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
           test_graphs_seq, test_labels)
-    model_path = f"result/17/withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
+    model_path = f"result/overfit/withH_model_selfatt_{train_number + 1}_xavier_fast-5——overfit.pth"
     RMSE, PCC, SPCC, MAE = test(test_graphs_seq, test_graphs_mol, test_smiles, test_labels, model_path, device)
     train_number += 1
 
@@ -170,7 +183,7 @@ average_rmse = np.mean(total_rmse)
 average_pcc = np.mean(total_pcc)
 average_spcc = np.mean(total_spcc)
 average_mae = np.mean(total_mae)
-print(f'Average RMSE: {average_rmse}')
-print(f'Average PCC: {average_pcc}')
-print(f'Average SPCC: {average_spcc}')
-print(f'Average MAE: {average_mae}')
+print(f'Average RMSE: {average_rmse}, std： {np.std(total_rmse)}')
+print(f'Average PCC: {average_pcc}, std： {np.std(total_pcc)}')
+print(f'Average SPCC: {average_spcc}, std： {np.std(total_spcc)}')
+print(f'Average MAE: {average_mae}, std： {np.std(total_mae)}')

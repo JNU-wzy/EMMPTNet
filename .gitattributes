@@ -1,2 +1,3 @@
 *.bin filter=lfs diff=lfs merge=lfs -text
 code/graph/dglgraph/ERNIE-RNA_k5_d768_smiles.bin filter=lfs diff=lfs merge=lfs -text
+weights/emb_data.npy filter=lfs diff=lfs merge=lfs -text
