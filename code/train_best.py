@@ -73,22 +73,36 @@ def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_
         epoch_duration = end_time - start_time
         print(f"Epoch {epoch}: Train Loss: {total_loss / len(train_loader)}, Duration: {epoch_duration:.2f} seconds")
         loss_history.append(total_loss / len(train_loader))
+<<<<<<< HEAD
         # 提前终止判断：如果训练集的损失在连续50个epoch没有下降
         if total_loss / len(train_loader) < best_RMSE_loss:
             best_RMSE_loss = total_loss / len(train_loader)
             counter = 0  # 重置耐心计数
+=======
+
+        if total_loss / len(train_loader) < best_RMSE_loss:
+            best_RMSE_loss = total_loss / len(train_loader)
+            counter = 0  
+>>>>>>> c66e0f859d81ebf5258a7b13f3512be2a01026d2
             torch.save({'model_state_dict': model.state_dict()}, os.path.join(save, model_filename))
             print(f"Saved model at epoch {epoch}")
         else:
             counter += 1
 
+<<<<<<< HEAD
         # 如果训练损失未改善超过耐心次数，提前结束
+=======
+
+>>>>>>> c66e0f859d81ebf5258a7b13f3512be2a01026d2
         if counter >= patience:
             print(f"Early stopping at epoch {epoch}, no improvement in training loss for {patience} epochs.")
             break
 
     print("Training complete.")
+<<<<<<< HEAD
 
+=======
+>>>>>>> c66e0f859d81ebf5258a7b13f3512be2a01026d2
 
 
 def test(test_data_seq, test_data_mol, test_smiles, test_labels, model_path, device):
@@ -131,12 +145,19 @@ def test(test_data_seq, test_data_mol, test_smiles, test_labels, model_path, dev
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 # 假设graphs是一个包含所有图的列表，labels是一个包含所有标签的张量
+<<<<<<< HEAD
 # _, label_dict = dgl.load_graphs("dataset/k5_d128_smiles.bin")
 graphs_seq = dgl.load_graphs(r"D:\Project\bioinformatics_project\binding "
                              r"affinity\code\smiles_kmer_GCNseq_GCNMOL\dataset\fasttext_k5_d128_rna.bin")
 graphs_seq = graphs_seq[0]
 labels = torch.Tensor(np.load("dataset/labels.npy")).to(device)
 smiles = pd.read_excel("dataset/smiles_3ker.xlsx")
+=======
+graphs_seq = dgl.load_graphs("dataset/fasttext_k5_d128_rna.bin")
+graphs_seq = graphs_seq[0]
+labels = torch.Tensor(np.load("dataset/restored_labels.npy")).to(device)
+smiles = pd.read_excel("dataset/smiles_3mer.xlsx")
+>>>>>>> c66e0f859d81ebf5258a7b13f3512be2a01026d2
 
 # graphs_mol = torch.load('dataset/mol_graphdataset_17.pth')
 file_path = 'dataset/mol_withH_17.pkl'  # **
@@ -154,10 +175,6 @@ total_spcc = []
 total_mae = []
 for train_idx, test_idx in kfold.split(graphs_seq):
     print("Train times: ", train_number + 1)
-    # if (train_number + 1) != 4:
-    #     print("!=4")
-    #     train_number += 1
-    #     continue
     train_graphs_mol = [graphs_mol[i] for i in train_idx]
     train_graphs_seq = [graphs_seq[i] for i in train_idx]
     train_smiles = [torch.tensor(smiles.iloc[i].values) for i in train_idx]
@@ -169,7 +186,11 @@ for train_idx, test_idx in kfold.split(graphs_seq):
 
     train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
           test_graphs_seq, test_labels)
+<<<<<<< HEAD
     model_path = f"result/overfit/withH_model_selfatt_{train_number + 1}_xavier_fast-5——overfit.pth"
+=======
+    model_path = f"weights/withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
+>>>>>>> c66e0f859d81ebf5258a7b13f3512be2a01026d2
     RMSE, PCC, SPCC, MAE = test(test_graphs_seq, test_graphs_mol, test_smiles, test_labels, model_path, device)
     train_number += 1
 

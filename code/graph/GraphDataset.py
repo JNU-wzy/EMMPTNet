@@ -406,4 +406,4 @@ class TestDataset(DGLDataset):
 
 
 params = config()
-dataset = TrainDataset(raw_dir=r"D:\Project\Pytorch_project\binding affinity\R-SIM\train\Excel\cleaned\Viral_RNA.xlsx", save_dir=rf'D:\Project\Pytorch_project\binding affinity\code\graph\dglgraph\onehot_k{params.k}_d{params.d}_smiles')
+dataset = TrainDataset(raw_dir=r"R-SIM\train\Excel\cleaned\Viral_RNA.xlsx", save_dir=rf'code\graph\dglgraph\onehot_k{params.k}_d{params.d}_smiles')
