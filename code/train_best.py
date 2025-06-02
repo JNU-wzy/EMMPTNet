@@ -23,12 +23,12 @@ import pickle
 
 def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
           test_graphs_seq, test_labels):
-    save = "result/overfit"
+    save = "result/"
     model_filename = f"withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
     if os.path.exists(os.path.join(save, model_filename)):
         print("model exists")
         return
-    model = GCN_BiLSTM_selfattn_d().to(device)
+    model = GCN_BiLSTM_selfattn().to(device)
     reset_parameters(model)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.0002, weight_decay=1e-4)
     best_RMSE_loss = 10
@@ -92,7 +92,7 @@ def train(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_
 
 def train_(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
            test_graphs_seq, test_smiles, test_labels):
-    save = "result/split"
+    save = "result/"
     model_filename = f"withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
     if os.path.exists(os.path.join(save, model_filename)):
         print("model exists")
@@ -253,7 +253,7 @@ for train_idx, test_idx in train_test_splits:
 
     train_(train_graphs_mol, train_graphs_seq, train_smiles, train_labels, train_number, device, test_graphs_mol,
            test_graphs_seq, test_smiles, test_labels)
-    model_path = f"result/split/withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
+    model_path = f"result/withH_model_selfatt_{train_number + 1}_xavier_fast-5.pth"
     RMSE, PCC, SPCC, MAE = test(test_graphs_seq, test_graphs_mol, test_smiles, test_labels, model_path, device)
     train_number += 1
 
