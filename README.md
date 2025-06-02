@@ -11,7 +11,7 @@
 
 ## Train Process
 In this study, we employed the following experimental setup.
-* Cross validation: `‘python code/train_best.py‘`
+* Cross validation: `‘python code/train.py‘`
 
 ## Contact
 If you have any issues or questions about this paper or need assistance with reproducing the results, please contact me.
